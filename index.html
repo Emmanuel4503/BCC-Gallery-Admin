@@ -646,7 +646,7 @@
   formData.append('type', imageType);
   selectedFiles.forEach(file => formData.append('primaryImage', file));
 
-  // Validate files client-side
+  // Client-side validation
   const maxSize = 5 * 1024 * 1024; // 5MB
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
   for (const file of selectedFiles) {
@@ -675,7 +675,7 @@
           updateProgress(100, 'Upload completed!');
           resolve(response);
         } else {
-          reject(new Error(response.message || `Upload failed: ${xhr.statusText}`));
+          reject(new Error(response.message || `Upload failed with status ${xhr.status}`));
         }
       } catch (err) {
         reject(new Error('Invalid server response. Please try again.'));
