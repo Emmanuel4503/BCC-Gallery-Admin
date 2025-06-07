@@ -641,43 +641,51 @@
         }
 
         async function uploadImages(albumTitle, imageType) {
-            const formData = new FormData();
-            formData.append('album', albumTitle);
-            formData.append('type', imageType);
+  const formData = new FormData();
+  formData.append('album', albumTitle);
+  formData.append('type', imageType);
+  selectedFiles.forEach(file => formData.append('primaryImage', file));
 
-            selectedFiles.forEach((file, index) => {
-                formData.append('primaryImage', file);
-            });
+  // Validate files client-side
+  const maxSize = 5 * 1024 * 1024; // 5MB
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  for (const file of selectedFiles) {
+    if (!allowedTypes.includes(file.type)) {
+      throw new Error(`${file.name} is not a supported type (JPEG, PNG, WebP).`);
+    }
+    if (file.size > maxSize) {
+      throw new Error(`${file.name} exceeds 5MB limit.`);
+    }
+  }
 
-            updateProgress(0, 'Preparing upload...');
+  updateProgress(0, 'Preparing upload...');
 
-            const xhr = new XMLHttpRequest();
-            
-            return new Promise((resolve, reject) => {
-                xhr.upload.addEventListener('progress', (e) => {
-                    if (e.lengthComputable) {
-                        const percentComplete = (e.loaded / e.total) * 100;
-                        updateProgress(percentComplete, `Uploading ${selectedFiles.length} images...`);
-                    }
-                });
-
-                xhr.addEventListener('load', () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        updateProgress(100, 'Upload completed!');
-                        resolve(JSON.parse(xhr.responseText));
-                    } else {
-                        reject(new Error(`Upload failed: ${xhr.statusText}`));
-                    }
-                });
-
-                xhr.addEventListener('error', () => {
-                    reject(new Error('Network error occurred during upload'));
-                });
-
-                xhr.open('POST', 'https://bcc-gallery-back-end.onrender.com/images/upload');
-                xhr.send(formData);
-            });
+  const xhr = new XMLHttpRequest();
+  return new Promise((resolve, reject) => {
+    xhr.upload.addEventListener('progress', e => {
+      if (e.lengthComputable) {
+        const percentComplete = (e.loaded / e.total) * 100;
+        updateProgress(percentComplete, `Uploading ${selectedFiles.length} images...`);
+      }
+    });
+    xhr.addEventListener('load', () => {
+      try {
+        const response = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          updateProgress(100, 'Upload completed!');
+          resolve(response);
+        } else {
+          reject(new Error(response.message || `Upload failed: ${xhr.statusText}`));
         }
+      } catch (err) {
+        reject(new Error('Invalid server response. Please try again.'));
+      }
+    });
+    xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+    xhr.open('POST', 'https://bcc-gallery-back-end.onrender.com/images/upload');
+    xhr.send(formData);
+  });
+}
 
         function updateProgress(percent, text) {
             progressFill.style.width = `${percent}%`;
