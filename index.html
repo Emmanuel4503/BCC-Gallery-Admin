@@ -663,7 +663,7 @@
                     }
                 });
                 xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
-                xhr.open('POST', 'https://bcc-gallery-back-end-6avw.onrender.com//images/upload');
+                xhr.open('POST', 'https://bcc-gallery-back-end-rl2k.onrender.com/images/upload');
                 xhr.send(formData);
             });
         }
@@ -710,7 +710,7 @@
 
             try {
                 // Fetch image count
-                const imagesResponse = await fetch('https://bcc-gallery-back-end-6avw.onrender.com//images/count', {
+                const imagesResponse = await fetch('https://bcc-gallery-back-end-rl2k.onrender.com/images/count', {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
@@ -744,7 +744,7 @@
                 totalImagesElement.textContent = `Total Images: ${imagesData.count || 0}`;
 
                 // Fetch user count
-                const usersResponse = await fetch('https://bcc-gallery-back-end-6avw.onrender.com//users/count', {
+                const usersResponse = await fetch('https://bcc-gallery-back-end-rl2k.onrender.com/users/count', {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
