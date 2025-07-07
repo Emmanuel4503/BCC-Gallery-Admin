@@ -481,7 +481,7 @@
             const passwordPrompt = document.getElementById('passwordPrompt');
             const mainContent = document.getElementById('mainContent');
 
-            if (passwordInput === '@MEDIA') {
+            if (passwordInput === '@MEDIA.COM') {
                 passwordPrompt.style.display = 'none';
                 mainContent.style.display = 'block';
                 fetchCounts(); 
@@ -602,7 +602,6 @@
                 uploadButton.textContent = 'Uploading...';
                 progressContainer.style.display = 'block';
                 hideMessages();
-                await addAlbumToDatabase(albumTitle);
 
               
                 await uploadImages(albumTitle, imageType);
@@ -620,25 +619,7 @@
             }
         });
 
-        async function addAlbumToDatabase(albumTitle) {
-            try {
-                const response = await fetch('https://bcc-gallery-back-end.onrender.com/album/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ title: albumTitle })
-                });
-
-            
-                if (!response.ok && response.status !== 409) {
-                    throw new Error(`Failed to add album: ${response.statusText}`);
-                }
-            } catch (error) {
-            
-                console.warn('Album addition warning:', error.message);
-            }
-        }
+       
 
         async function uploadImages(albumTitle, imageType) {
   const formData = new FormData();
@@ -718,28 +699,98 @@
             updateFileDisplay();
             imagePreviewGrid.innerHTML = '';
         }
-
         async function fetchCounts() {
-            try {
-                const imagesResponse = await fetch('https://bcc-gallery-back-end.onrender.com/images/count');
-                if (!imagesResponse.ok) {
-                    throw new Error(`Failed to fetch image count: ${imagesResponse.status}`);
-                }
-                const imagesData = await imagesResponse.json();
-                document.getElementById('totalImages').textContent = `Total Images: ${imagesData.count || 0}`;
+    const totalImagesElement = document.getElementById('totalImages');
+    const totalUsersElement = document.getElementById('totalUsers');
 
-                const usersResponse = await fetch('https://bcc-gallery-back-end.onrender.com/users/count');
-                if (!usersResponse.ok) {
-                    throw new Error(`Failed to fetch user count: ${usersResponse.status}`);
-                }
-                const usersData = await usersResponse.json();
-                document.getElementById('totalUsers').textContent = `Total Users: ${usersData.count || 0}`;
-            } catch (error) {
-                console.error('Error fetching counts:', error);
-                document.getElementById('totalImages').textContent = 'Total Images: Null';
-                document.getElementById('totalUsers').textContent = 'Total Users: Null';
-            }
-        }
+    // Set loading state
+    totalImagesElement.textContent = 'Total Images: Loading...';
+    totalUsersElement.textContent = 'Total Users: Loading...';
+
+    try {
+      // Fetch image count
+      const imagesResponse = await fetch('https://bcc-gallery-back-end.onrender.com/images/count', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        mode: 'cors'
+      });
+
+      if (!imagesResponse.ok) {
+        const text = await imagesResponse.text();
+        console.error('Image count fetch failed:', {
+          status: imagesResponse.status,
+          statusText: imagesResponse.statusText,
+          responseText: text.slice(0, 200)
+        });
+        throw new Error(`Failed to fetch image count: ${imagesResponse.status}`);
+      }
+
+      const imagesContentType = imagesResponse.headers.get('content-type');
+      if (!imagesContentType || !imagesContentType.includes('application/json')) {
+        const text = await imagesResponse.text();
+        console.error('Invalid response format for image count:', {
+          contentType: imagesContentType,
+          responseText: text.slice(0, 200)
+        });
+        throw new Error('Server returned non-JSON response for image count');
+      }
+
+      const imagesData = await imagesResponse.json();
+      totalImagesElement.textContent = `Total Images: ${imagesData.count || 0}`;
+
+      // Fetch user count
+      const usersResponse = await fetch('https://bcc-gallery-back-end.onrender.com/users/count', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        mode: 'cors'
+      });
+
+      if (!usersResponse.ok) {
+        const text = await usersResponse.text();
+        console.error('User count fetch failed:', {
+          status: usersResponse.status,
+          statusText: usersResponse.statusText,
+          responseText: text.slice(0, 200)
+        });
+        throw new Error(`Failed to fetch user count: ${usersResponse.status}`);
+      }
+
+      const usersContentType = usersResponse.headers.get('content-type');
+      if (!usersContentType || !usersContentType.includes('application/json')) {
+        const text = await usersResponse.text();
+        console.error('Invalid response format for user count:', {
+          contentType: usersContentType,
+          responseText: text.slice(0, 200)
+        });
+        throw new Error('Server returned non-JSON response for user count');
+      }
+
+      const usersData = await usersResponse.json();
+      totalUsersElement.textContent = `Total Users: ${usersData.count || 0}`;
+    } catch (error) {
+      console.error('Error fetching counts:', {
+        message: error.message,
+        stack: error.stack
+      });
+      let message = 'Failed to load counts. Please try again later.';
+      if (!navigator.onLine) {
+        message = 'No internet connection. Please check your network and try again.';
+      }
+      showError(message);
+      totalImagesElement.textContent = 'Total Images: 0';
+      totalUsersElement.textContent = 'Total Users: 0';
+    }
+  }
     </script>
 </body>
 </html> 
