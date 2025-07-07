@@ -622,51 +622,51 @@
        
 
         async function uploadImages(albumTitle, imageType) {
-  const formData = new FormData();
-  formData.append('album', albumTitle);
-  formData.append('type', imageType);
-  selectedFiles.forEach(file => formData.append('primaryImage', file));
+            const formData = new FormData();
+            formData.append('album', albumTitle);
+            formData.append('type', imageType);
+            selectedFiles.forEach(file => formData.append('primaryImage', file));
 
-  // Client-side validation
-  const maxSize = 20 * 1024 * 1024; // 10MB
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-  for (const file of selectedFiles) {
-    if (!allowedTypes.includes(file.type)) {
-      throw new Error(`${file.name} is not a supported type (JPEG, PNG, WebP).`);
-    }
-    if (file.size > maxSize) {
-      throw new Error(`${file.name} exceeds 10MB limit.`);
-    }
-  }
+            // Client-side validation
+            const maxSize = 20 * 1024 * 1024; // 20MB
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+            for (const file of selectedFiles) {
+                if (!allowedTypes.includes(file.type)) {
+                    throw new Error(`${file.name} is not a supported type (JPEG, PNG, WebP).`);
+                }
+                if (file.size > maxSize) {
+                    throw new Error(`${file.name} exceeds 20MB limit.`);
+                }
+            }
 
-  updateProgress(0, 'Preparing upload...');
+            updateProgress(0, 'Preparing upload...');
 
-  const xhr = new XMLHttpRequest();
-  return new Promise((resolve, reject) => {
-    xhr.upload.addEventListener('progress', e => {
-      if (e.lengthComputable) {
-        const percentComplete = (e.loaded / e.total) * 100;
-        updateProgress(percentComplete, `Uploading ${selectedFiles.length} images...`);
-      }
-    });
-    xhr.addEventListener('load', () => {
-      try {
-        const response = JSON.parse(xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300) {
-          updateProgress(100, 'Upload completed!');
-          resolve(response);
-        } else {
-          reject(new Error(response.message || `Upload failed with status ${xhr.status}`));
+            const xhr = new XMLHttpRequest();
+            return new Promise((resolve, reject) => {
+                xhr.upload.addEventListener('progress', e => {
+                    if (e.lengthComputable) {
+                        const percentComplete = (e.loaded / e.total) * 100;
+                        updateProgress(percentComplete, `Uploading ${selectedFiles.length} images...`);
+                    }
+                });
+                xhr.addEventListener('load', () => {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            updateProgress(100, 'Upload completed!');
+                            resolve(response);
+                        } else {
+                            reject(new Error(response.message || `Upload failed with status ${xhr.status}`));
+                        }
+                    } catch (err) {
+                        reject(new Error('Invalid server response. Please try again.'));
+                    }
+                });
+                xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
+                xhr.open('POST', 'https://bcc-gallery-back-end.onrender.com/images/upload');
+                xhr.send(formData);
+            });
         }
-      } catch (err) {
-        reject(new Error('Invalid server response. Please try again.'));
-      }
-    });
-    xhr.addEventListener('error', () => reject(new Error('Network error during upload')));
-    xhr.open('POST', 'https://bcc-gallery-back-end.onrender.com/images/upload');
-    xhr.send(formData);
-  });
-}
 
         function updateProgress(percent, text) {
             progressFill.style.width = `${percent}%`;
@@ -699,98 +699,97 @@
             updateFileDisplay();
             imagePreviewGrid.innerHTML = '';
         }
+
         async function fetchCounts() {
-    const totalImagesElement = document.getElementById('totalImages');
-    const totalUsersElement = document.getElementById('totalUsers');
+            const totalImagesElement = document.getElementById('totalImages');
+            const totalUsersElement = document.getElementById('totalUsers');
 
-    // Set loading state
-    totalImagesElement.textContent = 'Total Images: Loading...';
-    totalUsersElement.textContent = 'Total Users: Loading...';
+            // Set loading state
+            totalImagesElement.textContent = 'Total Images: Loading...';
+            totalUsersElement.textContent = 'Total Users: Loading...';
 
-    try {
-      // Fetch image count
-      const imagesResponse = await fetch('https://bcc-gallery-back-end.onrender.com/images/count', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'ngrok-skip-browser-warning': 'true'
-        },
-        mode: 'cors'
-      });
+            try {
+                // Fetch image count
+                const imagesResponse = await fetch('https://bcc-gallery-back-end.onrender.com/images/count', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    mode: 'cors'
+                });
 
-      if (!imagesResponse.ok) {
-        const text = await imagesResponse.text();
-        console.error('Image count fetch failed:', {
-          status: imagesResponse.status,
-          statusText: imagesResponse.statusText,
-          responseText: text.slice(0, 200)
-        });
-        throw new Error(`Failed to fetch image count: ${imagesResponse.status}`);
-      }
+                if (!imagesResponse.ok) {
+                    const text = await imagesResponse.text();
+                    console.error('Image count fetch failed:', {
+                        status: imagesResponse.status,
+                        statusText: imagesResponse.statusText,
+                        responseText: text.slice(0, 200)
+                    });
+                    throw new Error(`Failed to fetch image count: ${imagesResponse.status}`);
+                }
 
-      const imagesContentType = imagesResponse.headers.get('content-type');
-      if (!imagesContentType || !imagesContentType.includes('application/json')) {
-        const text = await imagesResponse.text();
-        console.error('Invalid response format for image count:', {
-          contentType: imagesContentType,
-          responseText: text.slice(0, 200)
-        });
-        throw new Error('Server returned non-JSON response for image count');
-      }
+                const imagesContentType = imagesResponse.headers.get('content-type');
+                if (!imagesContentType || !imagesContentType.includes('application/json')) {
+                    const text = await imagesResponse.text();
+                    console.error('Invalid response format for image count:', {
+                        contentType: imagesContentType,
+                        responseText: text.slice(0, 200)
+                    });
+                    throw new Error('Server returned non-JSON response for image count');
+                }
 
-      const imagesData = await imagesResponse.json();
-      totalImagesElement.textContent = `Total Images: ${imagesData.count || 0}`;
+                const imagesData = await imagesResponse.json();
+                totalImagesElement.textContent = `Total Images: ${imagesData.count || 0}`;
 
-      // Fetch user count
-      const usersResponse = await fetch('https://bcc-gallery-back-end.onrender.com/users/count', {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache',
-          'ngrok-skip-browser-warning': 'true'
-        },
-        mode: 'cors'
-      });
+                // Fetch user count
+                const usersResponse = await fetch('https://bcc-gallery-back-end.onrender.com/users/count', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache'
+                    },
+                    mode: 'cors'
+                });
 
-      if (!usersResponse.ok) {
-        const text = await usersResponse.text();
-        console.error('User count fetch failed:', {
-          status: usersResponse.status,
-          statusText: usersResponse.statusText,
-          responseText: text.slice(0, 200)
-        });
-        throw new Error(`Failed to fetch user count: ${usersResponse.status}`);
-      }
+                if (!usersResponse.ok) {
+                    const text = await usersResponse.text();
+                    console.error('User count fetch failed:', {
+                        status: usersResponse.status,
+                        statusText: usersResponse.statusText,
+                        responseText: text.slice(0, 200)
+                    });
+                    throw new Error(`Failed to fetch user count: ${usersResponse.status}`);
+                }
 
-      const usersContentType = usersResponse.headers.get('content-type');
-      if (!usersContentType || !usersContentType.includes('application/json')) {
-        const text = await usersResponse.text();
-        console.error('Invalid response format for user count:', {
-          contentType: usersContentType,
-          responseText: text.slice(0, 200)
-        });
-        throw new Error('Server returned non-JSON response for user count');
-      }
+                const usersContentType = usersResponse.headers.get('content-type');
+                if (!usersContentType || !usersContentType.includes('application/json')) {
+                    const text = await usersResponse.text();
+                    console.error('Invalid response format for user count:', {
+                        contentType: usersContentType,
+                        responseText: text.slice(0, 200)
+                    });
+                    throw new Error('Server returned non-JSON response for user count');
+                }
 
-      const usersData = await usersResponse.json();
-      totalUsersElement.textContent = `Total Users: ${usersData.count || 0}`;
-    } catch (error) {
-      console.error('Error fetching counts:', {
-        message: error.message,
-        stack: error.stack
-      });
-      let message = 'Failed to load counts. Please try again later.';
-      if (!navigator.onLine) {
-        message = 'No internet connection. Please check your network and try again.';
-      }
-      showError(message);
-      totalImagesElement.textContent = 'Total Images: 0';
-      totalUsersElement.textContent = 'Total Users: 0';
-    }
-  }
+                const usersData = await usersResponse.json();
+                totalUsersElement.textContent = `Total Users: ${usersData.count || 0}`;
+            } catch (error) {
+                console.error('Error fetching counts:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+                let message = 'Failed to load counts. Please try again later.';
+                if (!navigator.onLine) {
+                    message = 'No internet connection. Please check your network and try again.';
+                }
+                showError(message);
+                totalImagesElement.textContent = 'Total Images: 0';
+                totalUsersElement.textContent = 'Total Users: 0';
+            }
+        }
     </script>
 </body>
-</html> 
+</html>
