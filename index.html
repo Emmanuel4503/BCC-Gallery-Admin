@@ -603,6 +603,7 @@
                 progressContainer.style.display = 'block';
                 hideMessages();
 
+                await addAlbumToDatabase(albumTitle);
               
                 await uploadImages(albumTitle, imageType);
 
@@ -619,6 +620,27 @@
             }
         });
 
+
+
+        async function addAlbumToDatabase(albumTitle) {
+            try {
+                const response = await fetch('https://bcc-gallery-back-end-rl2k.onrender.com/album/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ title: albumTitle })
+                });
+
+            
+                if (!response.ok && response.status !== 409) {
+                    throw new Error(`Failed to add album: ${response.statusText}`);
+                }
+            } catch (error) {
+            
+                console.warn('Album addition warning:', error.message);
+            }
+        }
        
 
         async function uploadImages(albumTitle, imageType) {
