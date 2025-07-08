@@ -372,6 +372,7 @@
             gap: 1.5rem;
             align-items: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
         }
 
         .stats-item {
@@ -383,89 +384,6 @@
 
         .stats-item:hover {
             color: #FE9A65;
-        }
-
-        .albums-section {
-            margin: 40px;
-            padding: 30px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .albums-section h2 {
-            font-size: 2rem;
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .album-container {
-            margin-bottom: 30px;
-        }
-
-        .album-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            margin-bottom: 15px;
-        }
-
-        .album-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .delete-album-button {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #ff4d4d 0%, #cc0000 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .delete-album-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 10px rgba(255, 77, 77, 0.3);
-        }
-
-        .delete-album-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .album-images-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 10px;
-        }
-
-        .album-image-item {
-            position: relative;
-            aspect-ratio: 1;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .album-image-item:hover {
-            transform: scale(1.05);
-        }
-
-        .album-image-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
 
         @media (max-width: 768px) {
@@ -480,34 +398,11 @@
             .stats-item {
                 font-size: 1.1rem;
             }
-
-            .albums-section {
-                margin: 10px 20px;
-                padding: 20px;
-            }
-
-            .album-title {
-                font-size: 1.3rem;
-            }
-
-            .delete-album-button {
-                padding: 8px 15px;
-                font-size: 0.9rem;
-            }
         }
 
         @media (max-width: 480px) {
             .stats-item {
                 font-size: 1rem;
-            }
-
-            .album-title {
-                font-size: 1.1rem;
-            }
-
-            .delete-album-button {
-                padding: 6px 12px;
-                font-size: 0.8rem;
             }
         }
     </style>
@@ -577,11 +472,6 @@
             <span class="stats-item" id="totalImages">Total Images: Loading...</span>
             <span class="stats-item" id="totalUsers">Total Users: Loading...</span>
         </footer>
-
-        <section class="albums-section" id="albumsSection">
-            <h2>All Albums</h2>
-            <div id="albumsContainer"></div>
-        </section>
     </div>
 
     <script>
@@ -591,17 +481,17 @@
             const passwordPrompt = document.getElementById('passwordPrompt');
             const mainContent = document.getElementById('mainContent');
 
-            if (passwordInput === '@MEDIA.COM.GO') {
+            if (passwordInput === '@MEDIA.COM') {
                 passwordPrompt.style.display = 'none';
                 mainContent.style.display = 'block';
-                fetchCounts();
-                fetchAlbums();
+                fetchCounts(); 
             } else {
                 passwordError.style.display = 'block';
                 passwordInput.value = '';
             }
         }
 
+        
         document.getElementById('passwordInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 checkPassword();
@@ -623,7 +513,9 @@
         const successMessage = document.getElementById('successMessage');
         const errorMessage = document.getElementById('errorMessage');
 
+    
         fileInput.addEventListener('change', handleFileSelection);
+
 
         fileUploadContainer.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -687,11 +579,13 @@
             updateFileDisplay();
             createImagePreviews();
             
+            // Update file input
             const dt = new DataTransfer();
             selectedFiles.forEach(file => dt.items.add(file));
             fileInput.files = dt.files;
         }
 
+        // Form submission
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -710,11 +604,11 @@
                 hideMessages();
 
                 await addAlbumToDatabase(albumTitle);
+              
                 await uploadImages(albumTitle, imageType);
 
                 showSuccess(`Successfully uploaded ${selectedFiles.length} images to "${albumTitle}" album!`);
                 resetForm();
-                fetchAlbums();
 
             } catch (error) {
                 console.error('Upload error:', error);
@@ -726,6 +620,8 @@
             }
         });
 
+
+
         async function addAlbumToDatabase(albumTitle) {
             try {
                 const response = await fetch('https://bcc-gallery-back-end-rl2k.onrender.com/album/add', {
@@ -736,13 +632,16 @@
                     body: JSON.stringify({ title: albumTitle })
                 });
 
+            
                 if (!response.ok && response.status !== 409) {
                     throw new Error(`Failed to add album: ${response.statusText}`);
                 }
             } catch (error) {
+            
                 console.warn('Album addition warning:', error.message);
             }
         }
+       
 
         async function uploadImages(albumTitle, imageType) {
             const formData = new FormData();
@@ -750,7 +649,8 @@
             formData.append('type', imageType);
             selectedFiles.forEach(file => formData.append('primaryImage', file));
 
-            const maxSize = 20 * 1024 * 1024;
+            // Client-side validation
+            const maxSize = 20 * 1024 * 1024; // 20MB
             const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
             for (const file of selectedFiles) {
                 if (!allowedTypes.includes(file.type)) {
@@ -826,10 +726,12 @@
             const totalImagesElement = document.getElementById('totalImages');
             const totalUsersElement = document.getElementById('totalUsers');
 
+            // Set loading state
             totalImagesElement.textContent = 'Total Images: Loading...';
             totalUsersElement.textContent = 'Total Users: Loading...';
 
             try {
+                // Fetch image count
                 const imagesResponse = await fetch('https://bcc-gallery-back-end-rl2k.onrender.com/images/count', {
                     method: 'GET',
                     headers: {
@@ -863,6 +765,7 @@
                 const imagesData = await imagesResponse.json();
                 totalImagesElement.textContent = `Total Images: ${imagesData.count || 0}`;
 
+                // Fetch user count
                 const usersResponse = await fetch('https://bcc-gallery-back-end-rl2k.onrender.com/users/count', {
                     method: 'GET',
                     headers: {
@@ -880,6 +783,7 @@
                         statusText: usersResponse.statusText,
                         responseText: text.slice(0, 200)
                     });
+
                     throw new Error(`Failed to fetch user count: ${usersResponse.status}`);
                 }
 
@@ -907,114 +811,6 @@
                 showError(message);
                 totalImagesElement.textContent = 'Total Images: 0';
                 totalUsersElement.textContent = 'Total Users: 0';
-            }
-        }
-
-        async function fetchAlbums() {
-            const albumsContainer = document.getElementById('albumsContainer');
-            albumsContainer.innerHTML = '<div style="text-align: center; padding: 20px;">Loading albums...</div>';
-
-            try {
-                const response = await fetch('https://bcc-gallery-back-end-rl2k.onrender.com/album/get', {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Cache-Control': 'no-cache'
-                    },
-                    mode: 'cors'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch albums: ${response.status}`);
-                }
-
-                const albums = await response.json();
-                albumsContainer.innerHTML = '';
-
-                if (albums.length === 0) {
-                    albumsContainer.innerHTML = '<div style="text-align: center; padding: 20px;">No albums found.</div>';
-                    return;
-                }
-
-                for (const album of albums) {
-                    const albumContainer = document.createElement('div');
-                    albumContainer.className = 'album-container';
-
-                    const albumHeader = document.createElement('div');
-                    albumHeader.className = 'album-header';
-                    albumHeader.innerHTML = `
-                        <h3 class="album-title">${album.title}</h3>
-                        <button class="delete-album-button" onclick="deleteAlbum('${album._id}', '${album.title}')">Delete Album</button>
-                    `;
-
-                    const imagesGrid = document.createElement('div');
-                    imagesGrid.className = 'album-images-grid';
-
-                    const imagesResponse = await fetch(`https://bcc-gallery-back-end-rl2k.onrender.com/images/album/${encodeURIComponent(album.title)}`, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'Cache-Control': 'no-cache'
-                        },
-                        mode: 'cors'
-                    });
-
-                    if (imagesResponse.ok) {
-                        const images = await imagesResponse.json();
-                        images.forEach(image => {
-                            const imageItem = document.createElement('div');
-                            imageItem.className = 'album-image-item';
-                            imageItem.innerHTML = `
-                                <img src="${image.thumbnailUrl || image.imageUrl}" alt="${album.title} image">
-                            `;
-                            imagesGrid.appendChild(imageItem);
-                        });
-                    }
-
-                    albumContainer.appendChild(albumHeader);
-                    albumContainer.appendChild(imagesGrid);
-                    albumsContainer.appendChild(albumContainer);
-                }
-            } catch (error) {
-                console.error('Error fetching albums:', error);
-                albumsContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #721c24;">Failed to load albums. Please try again later.</div>';
-            }
-        }
-
-        async function deleteAlbum(albumId, albumTitle) {
-            if (!confirm(`Are you sure you want to delete the album "${albumTitle}" and all its images? This action cannot be undone.`)) {
-                return;
-            }
-
-            const deleteButton = event.target;
-            deleteButton.disabled = true;
-            deleteButton.textContent = 'Deleting...';
-
-            try {
-                const response = await fetch(`https://bcc-gallery-back-end-rl2k.onrender.com/album/delete/${albumId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    mode: 'cors'
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Failed to delete album: ${response.status}`);
-                }
-
-                showSuccess(`Album "${albumTitle}" deleted successfully.`);
-                fetchAlbums();
-                fetchCounts();
-            } catch (error) {
-                console.error('Error deleting album:', error);
-                showError(`Failed to delete album "${albumTitle}". Please try again.`);
-            } finally {
-                deleteButton.disabled = false;
-                deleteButton.textContent = 'Delete Album';
             }
         }
     </script>
